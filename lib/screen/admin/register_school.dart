@@ -1,5 +1,5 @@
 import 'package:bumblebee_school_final/bloc/admin/school_bloc/school_bloc.dart';
-import 'package:bumblebee_school_final/bloc/admin/school_bloc/school_register_event.dart';
+import 'package:bumblebee_school_final/bloc/admin/school_bloc/school_event.dart';
 import 'package:bumblebee_school_final/bloc/admin/school_bloc/school_state.dart';
 import 'package:bumblebee_school_final/repositories/admin/school_repository.dart';
 import 'package:bumblebee_school_final/screen/admin+teacher/home_screen.dart';

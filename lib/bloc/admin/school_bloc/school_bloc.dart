@@ -1,4 +1,4 @@
-import 'package:bumblebee_school_final/bloc/admin/school_bloc/school_register_event.dart';
+import 'package:bumblebee_school_final/bloc/admin/school_bloc/school_event.dart';
 import 'package:bumblebee_school_final/model/admin/school_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bumblebee_school_final/bloc/admin/school_bloc/school_state.dart';
