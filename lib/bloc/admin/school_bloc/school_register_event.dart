@@ -5,19 +5,13 @@ class RegisterSchool extends SchoolEvent {
   final String address;
   final String phone;
   final String email;
-  final String? website;
-  final String? logoUrl;
-  final DateTime? establishedDate;
-  final List<String>? departments;
+  final String id;
 
   RegisterSchool({
+    required this.id,
     required this.schoolName,
     required this.address,
     required this.phone,
     required this.email,
-    this.website,
-    this.logoUrl,
-    this.establishedDate,
-    this.departments,
   });
 }

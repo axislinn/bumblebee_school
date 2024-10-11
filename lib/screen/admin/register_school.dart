@@ -115,6 +115,7 @@ class _SchoolFormState extends State<SchoolForm> {
                                   final schoolBloc = BlocProvider.of<SchoolBloc>(context);
                                   schoolBloc.add(
                                     RegisterSchool(
+                                      id: '',
                                       schoolName: schoolNameController.text,
                                       address: addressController.text,
                                       phone: phoneController.text,

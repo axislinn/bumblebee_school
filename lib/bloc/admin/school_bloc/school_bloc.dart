@@ -13,18 +13,14 @@ class SchoolBloc extends Bloc<SchoolEvent, SchoolState> {
     on<RegisterSchool>(_onRegisterSchool);
   }
 
-  Future<void> _onRegisterSchool(
-    RegisterSchool event,
-    Emitter<SchoolState> emit,
-  ) async {
-    emit(SchoolLoading());
-
+  Future<void> _onRegisterSchool(RegisterSchool event,Emitter<SchoolState> emit,) async { emit(SchoolLoading());
     try {
       final school = SchoolModel(
         schoolName: event.schoolName,
         address: event.address,
         phone: event.phone,
-        email: event.email,
+        email: event.email, 
+        id: '',
       );
 
       final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -36,7 +32,7 @@ class SchoolBloc extends Bloc<SchoolEvent, SchoolState> {
 
       print('Retrieved token: $token');
 
-      await schoolRepository.registerSchool(school, token);
+      await schoolRepository.registerSchool(school,token);
       emit(SchoolSuccess());
     } catch (e) {
       emit(SchoolFailure(e.toString()));
