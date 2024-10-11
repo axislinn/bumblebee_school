@@ -21,15 +21,10 @@ class SchoolBloc extends Bloc<SchoolEvent, SchoolState> {
 
     try {
       final school = SchoolModel(
-        id: '', 
         schoolName: event.schoolName,
         address: event.address,
         phone: event.phone,
         email: event.email,
-        website: event.website,
-        logoUrl: event.logoUrl,
-        establishedDate: event.establishedDate,
-        departments: event.departments,
       );
 
       final SharedPreferences prefs = await SharedPreferences.getInstance();
