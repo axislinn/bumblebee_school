@@ -8,7 +8,6 @@ import 'package:bumblebee_school_final/screen/admin+teacher/school_select.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-
 class LoginScreen extends StatelessWidget {
   final UserRepository userRepository = UserRepository();
 
@@ -46,18 +45,18 @@ class _LoginFormState extends State<LoginForm> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<LoginBloc, LoginState>(  
-  listener: (context, state) {  
-    if (state is LoginSuccess) {   
-      if (state.user.schools.isNotEmpty) {      
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => HomeScreen()),
-        );
-      } else {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => SchoolSelect()),
-        );
-      }
+    return BlocListener<LoginBloc, LoginState>(
+      listener: (context, state) {
+        if (state is LoginSuccess) {
+          if (state.user.schools.isNotEmpty) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => HomeScreen()),
+            );
+          } else {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => SchoolSelect()),
+            );
+          }
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Welcome, ${state.user.userName}!')),
           );
@@ -126,5 +125,3 @@ class _LoginFormState extends State<LoginForm> {
     );
   }
 }
-
-
