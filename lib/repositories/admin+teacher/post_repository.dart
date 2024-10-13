@@ -16,35 +16,30 @@ class PostRepository {
     String selectedHeading,
     String? selectedClassName,
     String? schoolId,
-    List<String> contentPictures,
-    List<String> documents,
+    List<String> contentPictures, // This should be List<String>
+    List<String> documents, // This should be List<String>
     String? gradeName,
     String? className,
     String contentType,
   ) async {
     final url = 'http://18.138.29.140:3000/api/posts/create';
 
-    // Debug print for checking token
-    print('Token: $token');
-
     if (token == null || token.isEmpty) {
-      print('Token is missing.');
       return ApiResponse(success: false, message: "Token is missing.");
     }
 
-    // Create request body for announcement
+    // Create request body
     final requestBody = {
       'heading': selectedHeading,
       'classId': selectedClassName,
       'schoolId': schoolId,
-      'contentPictures': contentPictures,
-      'documents': documents,
+      'contentPictures':
+          contentPictures, // List of image paths or encoded strings
+      'documents': documents, // List of document paths or encoded strings
       'className': className ?? '',
       'gradeName': gradeName ?? '',
-      'contentType': contentType
+      'contentType': contentType,
     };
-
-    print('Announcement Request Body: $requestBody');
 
     try {
       final response = await http.post(
@@ -56,9 +51,6 @@ class PostRepository {
         body: jsonEncode(requestBody),
       );
 
-      print('Response Status: ${response.statusCode}');
-      print('Response Body: ${response.body}');
-
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
         return ApiResponse(
@@ -66,14 +58,12 @@ class PostRepository {
           message: jsonResponse['msg'] ?? 'No message received',
         );
       } else {
-        print('Failed to create announcement: ${response.reasonPhrase}');
         return ApiResponse(
           success: false,
           message: 'Failed to create announcement: ${response.reasonPhrase}',
         );
       }
     } catch (e) {
-      print('An error occurred: $e');
       return ApiResponse(success: false, message: 'An error occurred: $e');
     }
   }
@@ -106,8 +96,6 @@ class PostRepository {
       'contentPictures': contentPictures,
       'documents': documents,
       'contentType': contentType,
-      // 'className': className ?? '',
-      // 'gradeName': gradeName ?? '',
     };
 
     print('Feed Post Request Body: $requestBody');

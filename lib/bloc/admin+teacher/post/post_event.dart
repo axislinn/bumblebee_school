@@ -7,6 +7,7 @@ abstract class PostEvent extends Equatable {
 }
 
 class CreatePost extends PostEvent {
+  final String? token;
   final String heading;
   final String? body;
   final String contentType;
@@ -18,6 +19,7 @@ class CreatePost extends PostEvent {
   final String className;
 
   CreatePost({
+    this.token,
     required this.heading,
     this.body,
     required this.contentType,
@@ -31,6 +33,7 @@ class CreatePost extends PostEvent {
 
   @override
   List<Object?> get props => [
+        token,
         heading,
         body,
         contentType,
