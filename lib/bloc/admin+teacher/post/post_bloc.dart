@@ -44,26 +44,51 @@ class PostBloc extends Bloc<PostEvent, PostState> {
       print("SchoolId: $schoolId");
       print("ContentPictures: $imagePaths");
       print("Documents: $documentPaths");
-      print("GradeName: ${event.gradeName}"); // Added for debugging
+      print("GradeName: ${event.gradeName}");
 
-      // Correctly passing parameters to createPost
-      final result = await postRepository.createPost(
-        token, // Token
-        event.heading, // Heading
-        event.contentType, // Content Type
-        event.classId, // Class ID
-        schoolId, // School ID
-        imagePaths, // Image paths
-        documentPaths, // Document paths
-        event.gradeName, // Grade Name
-        event.className,
-      );
+      // Check the content type and call the appropriate method
+      if (event.contentType == 'announcement') {
+        // Call the announcement post creation
+        final result = await postRepository.createAnnouncement(
+          token, // Token
+          event.heading, // Heading
+          event.classId, // Class ID
+          schoolId, // School ID
+          imagePaths, // Image paths
+          documentPaths, // Document paths
+          event.gradeName, // Grade Name
+          event.className, // Class Name
+          event.contentType,
+        );
 
-      if (result.success) {
-        emit(PostSuccess([])); // Adjust the success state as necessary
+        if (result.success) {
+          emit(PostSuccess([])); // Adjust the success state as necessary
+        } else {
+          print('Failed to create announcement: ${result.message}');
+          emit(PostFailure(result.message));
+        }
+      } else if (event.contentType == 'feed') {
+        // Call the feed post creation
+        final result = await postRepository.createFeedPost(
+          token, // Token
+          event.heading, // Heading
+          schoolId, // School ID
+          imagePaths, // Image paths
+          documentPaths, // Document paths
+          event.gradeName, // Grade Name
+          event.className, // Class Name
+          event.contentType,
+        );
+
+        if (result.success) {
+          emit(PostSuccess([])); // Adjust the success state as necessary
+        } else {
+          print('Failed to create feed post: ${result.message}');
+          emit(PostFailure(result.message));
+        }
       } else {
-        print('Failed to create post: ${result.message}');
-        emit(PostFailure(result.message));
+        print('Invalid content type: ${event.contentType}');
+        emit(PostFailure('Invalid content type'));
       }
     } catch (e) {
       print("An error occurred while creating the post: $e");

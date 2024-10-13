@@ -10,52 +10,41 @@ class ApiResponse {
 }
 
 class PostRepository {
-  Future<ApiResponse> createPost(
+  // Function to create announcement post
+  Future<ApiResponse> createAnnouncement(
     String? token,
     String selectedHeading,
-    String selectedContentType,
     String? selectedClassName,
     String? schoolId,
     List<String> contentPictures,
     List<String> documents,
     String? gradeName,
     String? className,
+    String contentType,
   ) async {
     final url = 'http://18.138.29.140:3000/api/posts/create';
 
     // Debug print for checking token
     print('Token: $token');
 
-    // Check for missing token
     if (token == null || token.isEmpty) {
       print('Token is missing.');
       return ApiResponse(success: false, message: "Token is missing.");
     }
 
-    // Check for missing required fields
-    if (selectedHeading.isEmpty ||
-        selectedContentType.isEmpty ||
-        selectedClassName == null || // Uncomment if needed
-        gradeName == null ||
-        schoolId == null) {
-      print('Missing required fields.');
-      return ApiResponse(success: false, message: "Missing required fields.");
-    }
-
-    // Create request body
+    // Create request body for announcement
     final requestBody = {
       'heading': selectedHeading,
-      'contentType': selectedContentType,
-      'classId': selectedClassName, // Uncomment if required
-      'gradeId': gradeName,
+      'classId': selectedClassName,
       'schoolId': schoolId,
       'contentPictures': contentPictures,
       'documents': documents,
-      'className': className,
-      'gradeName': gradeName,
+      'className': className ?? '',
+      'gradeName': gradeName ?? '',
+      'contentType': contentType
     };
 
-    print('Request Body: $requestBody');
+    print('Announcement Request Body: $requestBody');
 
     try {
       final response = await http.post(
@@ -72,16 +61,81 @@ class PostRepository {
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-
         return ApiResponse(
           success: jsonResponse['con'] ?? false,
           message: jsonResponse['msg'] ?? 'No message received',
         );
       } else {
-        print('Failed to create post: ${response.reasonPhrase}');
+        print('Failed to create announcement: ${response.reasonPhrase}');
         return ApiResponse(
           success: false,
-          message: 'Failed to create post: ${response.reasonPhrase}',
+          message: 'Failed to create announcement: ${response.reasonPhrase}',
+        );
+      }
+    } catch (e) {
+      print('An error occurred: $e');
+      return ApiResponse(success: false, message: 'An error occurred: $e');
+    }
+  }
+
+// Function to create feed post
+  Future<ApiResponse> createFeedPost(
+    String? token,
+    String selectedHeading,
+    String? schoolId,
+    List<String> contentPictures,
+    List<String> documents,
+    String? gradeName,
+    String? className,
+    String contentType,
+  ) async {
+    final url = 'http://18.138.29.140:3000/api/posts/create';
+
+    // Debug print for checking token
+    print('Token: $token');
+
+    if (token == null || token.isEmpty) {
+      print('Token is missing.');
+      return ApiResponse(success: false, message: "Token is missing.");
+    }
+
+    // Create request body for feed post
+    final requestBody = {
+      'heading': selectedHeading,
+      'schoolId': schoolId,
+      'contentPictures': contentPictures,
+      'documents': documents,
+      'contentType': contentType,
+      // 'className': className ?? '',
+      // 'gradeName': gradeName ?? '',
+    };
+
+    print('Feed Post Request Body: $requestBody');
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(requestBody),
+      );
+
+      print('Response Status: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        return ApiResponse(
+          success: jsonResponse['con'] ?? false,
+          message: jsonResponse['msg'] ?? 'No message received',
+        );
+      } else {
+        print('Failed to create feed post: ${response.reasonPhrase}');
+        return ApiResponse(
+          success: false,
+          message: 'Failed to create feed post: ${response.reasonPhrase}',
         );
       }
     } catch (e) {
@@ -91,8 +145,7 @@ class PostRepository {
   }
 
   Future<List<PostModel>> fetchPosts(String? token) async {
-    final url =
-        'https://bumblebeeflutterdeploy-production.up.railway.app/api/posts/getFeeds';
+    final url = 'http://18.138.29.140:3000/api/posts/getFeeds';
 
     // Check if the token is null or empty
     if (token == null || token.isEmpty) {

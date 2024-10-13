@@ -1,5 +1,5 @@
-import 'package:bumblebee_school_final/model/admin+teacher/post_by_model.dart';
 import 'package:bumblebee_school_final/model/admin+teacher/class_model.dart';
+import 'package:bumblebee_school_final/model/admin+teacher/post_by_model.dart';
 import 'package:bumblebee_school_final/model/admin/school_model.dart';
 
 class PostModel {
@@ -50,16 +50,20 @@ class PostModel {
           : null,
       contentType: json['contentType'] ?? '',
       reactions: json['reactions'] ?? 0,
-      classId: json['classId'],
-      schoolId: json['schoolId'],
-      school: json['school'] != null ? SchoolModel.fromJson(json['school']) : null,
-      classModel: json['class'] != null ? ClassModel.fromJson(json['class']) : null,
-      createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'])
-          : null,
-      updatedAt: json['updatedAt'] != null
-          ? DateTime.parse(json['updatedAt'])
-          : null,
+      classId: json['classId'] is Map
+          ? json['classId']['id'] as String?
+          : json['classId'] as String?, // Handle null safely
+      schoolId: json['schoolId'] is Map
+          ? json['schoolId']['id'] as String?
+          : json['schoolId'] as String?, // Handle null safely
+      school:
+          json['school'] != null ? SchoolModel.fromJson(json['school']) : null,
+      classModel:
+          json['class'] != null ? ClassModel.fromJson(json['class']) : null,
+      createdAt:
+          json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+      updatedAt:
+          json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
       postedBy: json['posted_by'] != null
           ? PostedByModel.fromJson(json['posted_by'])
           : null,
