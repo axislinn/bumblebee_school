@@ -1,84 +1,91 @@
 import 'dart:convert';
 import 'package:bumblebee_school_final/model/admin+teacher/post_model.dart';
 import 'package:http/http.dart' as http;
-import 'package:path/path.dart';
 
 class ApiResponse {
   final bool success;
-  final String? message;
+  final String message;
 
-  ApiResponse({required this.success, this.message});
+  ApiResponse({required this.success, required this.message});
 }
 
 class PostRepository {
-  Future<ApiResponse> createPost(PostModel post, String schoolId, String token,
-    List<String> imagePaths, List<String> documentPaths) async {
-    final url = 'http://18.138.29.140:3000';
-    final request = http.MultipartRequest('POST', Uri.parse(url));
+  Future<ApiResponse> createPost(
+    String? token,
+    String selectedHeading,
+    String selectedContentType,
+    String? selectedClassName,
+    String? schoolId,
+    List<String> contentPictures,
+    List<String> documents,
+    String? gradeName,
+    String? className,
+  ) async {
+    final url = 'http://18.138.29.140:3000/api/posts/create';
 
-    // Set headers for the request
-    request.headers['Authorization'] = 'Bearer $token';
-    request.fields['schoolId'] = schoolId;
-    request.fields['heading'] = post.heading;
-    if (post.body != null) {
-      request.fields['body'] = post.body!;
-    }
-    request.fields['contentType'] = post.contentType;
-    if (post.classId != null) {
-      request.fields['classId'] = post.classId!;
-    }
+    // Debug print for checking token
+    print('Token: $token');
 
-    // Add each image file to the request
-    for (var imagePath in imagePaths) {
-      var picture = await http.MultipartFile.fromPath(
-        'contentPictures', // Backend field for the images
-        imagePath, // Get the path of each file
-        filename: basename(imagePath), // Get the filename
-      );
-      request.files.add(picture);
+    // Check for missing token
+    if (token == null || token.isEmpty) {
+      print('Token is missing.');
+      return ApiResponse(success: false, message: "Token is missing.");
     }
 
-    // Add each document file to the request
-    for (var documentPath in documentPaths) {
-      var document = await http.MultipartFile.fromPath(
-        'documents', // Backend field for the documents
-        documentPath, // Get the path of each file
-        filename: basename(documentPath), // Get the filename
-      );
-      request.files.add(document);
+    // Check for missing required fields
+    if (selectedHeading.isEmpty ||
+        selectedContentType.isEmpty ||
+        selectedClassName == null || // Uncomment if needed
+        gradeName == null ||
+        schoolId == null) {
+      print('Missing required fields.');
+      return ApiResponse(success: false, message: "Missing required fields.");
     }
+
+    // Create request body
+    final requestBody = {
+      'heading': selectedHeading,
+      'contentType': selectedContentType,
+      'classId': selectedClassName, // Uncomment if required
+      'gradeId': gradeName,
+      'schoolId': schoolId,
+      'contentPictures': contentPictures,
+      'documents': documents,
+      'className': className,
+      'gradeName': gradeName,
+    };
+
+    print('Request Body: $requestBody');
 
     try {
-      // Send the request
-      var response = await request.send();
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(requestBody),
+      );
 
-      // Parse the response
-      final respStr = await response.stream.bytesToString();
-      var jsonResponse = json.decode(respStr);
+      print('Response Status: ${response.statusCode}');
+      print('Response Body: ${response.body}');
 
-      // Log the response
-      print("HTTP Status Code: ${response.statusCode}");
-      print(
-          "Response Body: $respStr"); // Log the full response body for debugging
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
 
-      // Check for success
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        // Extract success and message from the response
         return ApiResponse(
-          success: jsonResponse['con'] ?? false, // Capture success from 'con'
-          message: jsonResponse['msg'], // Capture message from 'msg'
+          success: jsonResponse['con'] ?? false,
+          message: jsonResponse['msg'] ?? 'No message received',
         );
       } else {
-        // Log the entire jsonResponse on failure
-        print("Failure Response: $jsonResponse"); // Log failure details
+        print('Failed to create post: ${response.reasonPhrase}');
         return ApiResponse(
           success: false,
-          message: jsonResponse['msg'] ??
-              'Failed to create post', // Fallback message
+          message: 'Failed to create post: ${response.reasonPhrase}',
         );
       }
     } catch (e) {
-      print("HTTP error occurred: $e");
+      print('An error occurred: $e');
       return ApiResponse(success: false, message: 'An error occurred: $e');
     }
   }
@@ -134,6 +141,103 @@ class PostRepository {
       // Debugging: Log any errors
       print("Error fetching posts: $e");
       return [];
+    }
+  }
+
+  // Fetch class names
+  static Future<List<String>> fetchClassNames(String token) async {
+    final response = await http.get(
+      Uri.parse('http://18.138.29.140:3000/api/class/classNames'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+
+      // Debugging the structure
+      print(jsonResponse);
+
+      if (jsonResponse["con"] == true) {
+        // The result is directly a list of class names
+        var classNamesResult = jsonResponse["result"];
+
+        // Ensure it's a list, and then return it
+        if (classNamesResult is List) {
+          return List<String>.from(classNamesResult);
+        } else {
+          throw Exception(
+              "Expected a list of class names, but got something else.");
+        }
+      } else {
+        throw Exception("Error fetching class names: ${jsonResponse['msg']}");
+      }
+    } else {
+      throw Exception('Failed to fetch class names');
+    }
+  }
+
+  //fetch Grade Names
+  static Future<List<String>> fetchGradeNames(String token) async {
+    final response = await http.get(
+      Uri.parse('http://18.138.29.140:3000/api/class/gradeNames'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+
+      // Debugging the structure
+      print(jsonResponse);
+
+      if (jsonResponse["con"] == true) {
+        // The result is directly a list of grade names
+        var gradeNamesResult = jsonResponse["result"];
+
+        // Ensure it's a list, and then return it
+        if (gradeNamesResult is List) {
+          return List<String>.from(gradeNamesResult);
+        } else {
+          throw Exception(
+              "Expected a list of grade names, but got something else.");
+        }
+      } else {
+        throw Exception("Error fetching grade names: ${jsonResponse['msg']}");
+      }
+    } else {
+      throw Exception('Failed to fetch grade names');
+    }
+  }
+
+  //get schoolName and schoolId
+  static Future<List<Map<String, dynamic>>> fetchSchoolData(
+      String token) async {
+    final response = await http.get(
+      Uri.parse(
+          'http://18.138.29.140:3000/api/school/getSchool'), // Replace with actual endpoint
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+
+      // Debugging: print the whole JSON response
+      print('JSON Response: $jsonResponse');
+
+      // Check if the expected fields exist in the response
+      if (jsonResponse["con"] == true && jsonResponse["result"] is List) {
+        // Return the list of schools
+        return List<Map<String, dynamic>>.from(jsonResponse["result"]);
+      } else {
+        throw Exception("Error fetching school data: ${jsonResponse['msg']}");
+      }
+    } else {
+      throw Exception('Failed to fetch school data: ${response.statusCode}');
     }
   }
 }

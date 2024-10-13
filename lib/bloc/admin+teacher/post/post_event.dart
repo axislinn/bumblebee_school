@@ -14,6 +14,8 @@ class CreatePost extends PostEvent {
   final String schoolId;
   final List<File> contentPictures; // Now accepts multiple images
   final List<File> documents; // List of selected documents
+  final String? gradeName; // Assuming this is the missing parameter
+  final String className;
 
   CreatePost({
     required this.heading,
@@ -23,6 +25,8 @@ class CreatePost extends PostEvent {
     required this.schoolId,
     required this.contentPictures, // Optionally pass an image file here
     required this.documents, // Ensure this is defined
+    this.gradeName,
+    required this.className,
   });
 
   @override
@@ -33,6 +37,8 @@ class CreatePost extends PostEvent {
         classId,
         contentPictures,
         documents, // Ensure this is included in the props
+        gradeName,
+        className,
       ];
 }
 

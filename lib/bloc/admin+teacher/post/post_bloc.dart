@@ -18,53 +18,56 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     emit(PostLoading());
 
     try {
-      // Retrieve token and schoolId from SharedPreferences
       final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('userToken');
-      final schoolId = prefs.getString('schoolId');
+      final String? token = prefs.getString('userToken');
+      final String? schoolId = prefs.getString('schoolId');
+
+      print("Token: $token");
+      print("SchoolId: $schoolId");
 
       if (token == null || schoolId == null) {
+        print('Authentication token or School ID not found');
         emit(PostFailure('Authentication token or School ID not found'));
         return;
       }
 
       // Convert List<File> to List<String> (file paths) for images and documents
-      final List<String> imagePaths = event.contentPictures
-          .map((image) => image.path)
-          .toList(); // Convert to paths
-      final List<String> documentPaths = event.documents
-          .map((document) => document.path)
-          .toList(); // Convert to paths
+      final List<String> imagePaths =
+          event.contentPictures.map((image) => image.path).toList();
+      final List<String> documentPaths =
+          event.documents.map((document) => document.path).toList();
 
-      // Create Post model with image paths
-      final post = PostModel(
-        heading: event.heading,
-        body: event.body,
-        contentType: event.contentType,
-        classId: event.classId,
-        schoolId: schoolId,
-        contentPictures: imagePaths, // Now passing paths, not File objects
+      print("Submitting Post with details:");
+      print("Heading: ${event.heading}");
+      print("ContentType: ${event.contentType}");
+      print("ClassId: ${event.classId}");
+      print("SchoolId: $schoolId");
+      print("ContentPictures: $imagePaths");
+      print("Documents: $documentPaths");
+      print("GradeName: ${event.gradeName}"); // Added for debugging
+
+      // Correctly passing parameters to createPost
+      final result = await postRepository.createPost(
+        token, // Token
+        event.heading, // Heading
+        event.contentType, // Content Type
+        event.classId, // Class ID
+        schoolId, // School ID
+        imagePaths, // Image paths
+        documentPaths, // Document paths
+        event.gradeName, // Grade Name
+        event.className,
       );
 
-      // Pass images and documents to the repository
-      final result = await postRepository.createPost(
-          post, schoolId, token, imagePaths, documentPaths);
-
-      // Log response for debugging
-      print("Post creation response: ${result}");
-
-      // Check the result and emit appropriate state
       if (result.success) {
-        emit(PostSuccess([]));
+        emit(PostSuccess([])); // Adjust the success state as necessary
       } else {
-        // Log the failure message in the console for debugging
-        print("Failed to create post: ${result.message}");
-        emit(PostFailure(result.message ?? 'Failed to create post'));
+        print('Failed to create post: ${result.message}');
+        emit(PostFailure(result.message));
       }
     } catch (e) {
-      // Log the caught error in the debug console
-      print("An error occurred: $e");
-      emit(PostFailure('An error occurred: $e'));
+      print("An error occurred while creating the post: $e");
+      emit(PostFailure('An error occurred while creating the post: $e'));
     }
   }
 
