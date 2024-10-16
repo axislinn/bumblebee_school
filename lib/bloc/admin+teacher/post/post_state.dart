@@ -4,7 +4,9 @@ abstract class PostState {}
 
 class PostInitial extends PostState {}
 
-class PostLoading extends PostState {}
+class PostLoading extends PostState {
+  ///အဲ့အပိုင်းမှာကို ထပ်ပြီး​ောတ့ ပြင်ပြီးတော့ကို ထည့်ပေးဖို့ကို လိုမည်
+}
 
 class PostSuccess extends PostState {
   final List<PostModel> posts; // Add a field to store the list of posts

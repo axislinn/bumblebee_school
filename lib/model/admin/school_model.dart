@@ -25,17 +25,16 @@ class SchoolModel {
   }
 
   // convert a School object to a JSON map.
-Map<String, dynamic> toJson({bool includeId = true}) {
-  final Map<String, dynamic> data = {
-    'schoolName': schoolName,
-    'address': address,
-    'phone': phone,
-    'email': email,
-  };
-  if (includeId && id.isNotEmpty) {
-    data['_id'] = id;
+  Map<String, dynamic> toJson({bool includeId = true}) {
+    final Map<String, dynamic> data = {
+      'schoolName': schoolName,
+      'address': address,
+      'phone': phone,
+      'email': email,
+    };
+    if (includeId && id.isNotEmpty) {
+      data['_id'] = id;
+    }
+    return data;
   }
-  return data;
-}
-
 }

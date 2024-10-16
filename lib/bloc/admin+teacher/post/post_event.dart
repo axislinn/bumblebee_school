@@ -46,3 +46,12 @@ class CreatePost extends PostEvent {
 }
 
 class FetchPosts extends PostEvent {} // New event for fetching posts
+
+class DeletePost extends PostEvent {
+  final String postId;
+
+  DeletePost(this.postId);
+
+  @override
+  List<Object?> get props => [postId];
+}

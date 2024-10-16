@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:bumblebee_school_final/bloc/admin+teacher/post/post_event.dart';
 import 'package:bumblebee_school_final/bloc/admin+teacher/post/post_state.dart';
 import 'package:bumblebee_school_final/model/admin+teacher/post_model.dart';
@@ -17,6 +16,7 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     // Register event handlers
     on<CreatePost>(_onCreatePost);
     on<FetchPosts>(_onFetchPosts);
+    on<DeletePost>(_onDeletePost);
   }
 
 // // File-to-MultipartFile conversion function
@@ -121,6 +121,31 @@ class PostBloc extends Bloc<PostEvent, PostState> {
       // Log the error for debugging
       print("An error occurred while fetching posts: $e");
       emit(PostFailure('An error occurred: $e'));
+    }
+  }
+
+  // Handler for DeletePost event
+  Future<void> _onDeletePost(DeletePost event, Emitter<PostState> emit) async {
+    emit(PostLoading()); // Loading state while deleting
+
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('userToken');
+
+      if (token == null) {
+        emit(PostFailure('Authentication token not found'));
+        return;
+      }
+
+      final result = await postRepository.deletePost(token, event.postId);
+
+      if (result.success) {
+        emit(PostSuccess([])); // Optionally refetch posts after deletion
+      } else {
+        emit(PostFailure(result.message)); // Handle failure
+      }
+    } catch (e) {
+      emit(PostFailure('An error occurred while deleting the post: $e'));
     }
   }
 }
