@@ -18,38 +18,6 @@ class PostWidget extends StatefulWidget {
 
 class _PostWidgetState extends State<PostWidget> {
   @override
-  void initState() {
-    super.initState();
-    _onDeletePost(widget.post.id!);
-  }
-
-  Future<void> _onDeletePost(String postId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('userToken');
-
-    if (token != null) {
-      try {
-        // Create an instance of PostRepository
-        final postRepository = PostRepository();
-
-        final ApiResponse response =
-            await postRepository.deletePost(token, postId);
-
-        if (response.success) {
-          print("Post deleted successfully: $postId");
-          // Optionally refresh the UI or show a confirmation message
-        } else {
-          print("Failed to delete post: ${response.message}");
-        }
-      } catch (e) {
-        print("Error deleting post: $e");
-      }
-    } else {
-      print("User token not found");
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     final formattedCreatedAt = widget.post.createdAt != null
         ? timeago.format(widget.post.createdAt!)
@@ -209,7 +177,6 @@ class _PostWidgetState extends State<PostWidget> {
 
   void _confirmDelete(BuildContext context, PostBloc postBloc, String? postId) {
     if (postId == null) {
-      // Optionally show a message or handle the null case
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Cannot delete the post. Post ID is missing.')),
       );
@@ -230,7 +197,6 @@ class _PostWidgetState extends State<PostWidget> {
             TextButton(
               child: Text('Delete'),
               onPressed: () {
-                // Use the passed PostBloc instead of BlocProvider.of<PostBloc>(context)
                 postBloc.add(DeletePost(postId));
                 Navigator.of(context).pop(); // Close the dialog
               },

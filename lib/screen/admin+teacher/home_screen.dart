@@ -1,9 +1,7 @@
 import 'dart:async';
-
 import 'package:bumblebee_school_final/bloc/admin+teacher/post/post_bloc.dart';
 import 'package:bumblebee_school_final/bloc/admin+teacher/post/post_event.dart';
 import 'package:bumblebee_school_final/bloc/admin+teacher/post/post_state.dart';
-import 'package:bumblebee_school_final/model/admin+teacher/post_model.dart';
 import 'package:bumblebee_school_final/repositories/admin+teacher/post_repository.dart';
 import 'package:bumblebee_school_final/screen/admin+teacher/body_widget.dart';
 import 'package:bumblebee_school_final/screen/admin+teacher/bottom_nav/bottom_nav.dart';
