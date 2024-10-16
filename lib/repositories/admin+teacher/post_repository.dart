@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:bumblebee_school_final/model/admin+teacher/post_model.dart';
 import 'package:http/http.dart' as http;
+import 'package:path/path.dart';
 
 class ApiResponse {
   final bool success;
@@ -10,137 +13,211 @@ class ApiResponse {
 }
 
 class PostRepository {
-  // Function to create announcement post
+  // // Function to create announcement post
+  // Future<ApiResponse> createAnnouncement(
+  //   String? token,
+  //   String selectedHeading,
+  //   String? bodyText,
+  //   String? selectedClassName,
+  //   String? schoolId,
+  //   List<String> contentPictures,
+  //   List<String> documents,
+  //   String? gradeName,
+  //   String? className,
+  //   String contentType,
+  // ) async {
+  //   final url = 'http://18.138.29.140:3000/api/posts/create';
+
+  //   // Debug print for checking token
+  //   print('Token: $token');
+
+  //   if (token == null || token.isEmpty) {
+  //     print('Token is missing.');
+  //     return ApiResponse(success: false, message: "Token is missing.");
+  //   }
+
+  //   // Create request body for announcement
+  //   final requestBody = {
+  //     'heading': selectedHeading,
+  //     'body': bodyText ?? '',
+  //     'classId': selectedClassName,
+  //     'schoolId': schoolId ?? '',
+  //     'contentPictures': contentPictures,
+  //     'documents': documents,
+  //     'className': className ?? '',
+  //     'gradeName': gradeName ?? '',
+  //     'contentType': contentType
+  //   };
+
+  //   print('Announcement Request Body: $requestBody');
+
+  //   try {
+  //     final response = await http.post(
+  //       Uri.parse(url),
+  //       headers: {
+  //         'Authorization': 'Bearer $token',
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: jsonEncode(requestBody),
+  //     );
+
+  //     print('Response Status: ${response.statusCode}');
+  //     print('Response Body: ${response.body}');
+
+  //     if (response.statusCode == 200) {
+  //       final jsonResponse = jsonDecode(response.body);
+  //       return ApiResponse(
+  //         success: jsonResponse['con'] ?? false,
+  //         message: jsonResponse['msg'] ?? 'No message received',
+  //       );
+  //     } else {
+  //       print('Failed to create announcement: ${response.reasonPhrase}');
+  //       return ApiResponse(
+  //         success: false,
+  //         message: 'Failed to create announcement: ${response.reasonPhrase}',
+  //       );
+  //     }
+  //   } catch (e) {
+  //     print('An error occurred: $e');
+  //     return ApiResponse(success: false, message: 'An error occurred: $e');
+  //   }
+  // }
+
+  // Function to create an announcement post
   Future<ApiResponse> createAnnouncement(
-    String? token,
-    String selectedHeading,
-    String? selectedClassName,
-    String? schoolId,
-    List<String> contentPictures,
-    List<String> documents,
+    String token,
+    String heading,
+    String? body,
+    String classId,
+    String schoolId,
+    List<http.MultipartFile> contentPictures,
+    List<http.MultipartFile> documents,
     String? gradeName,
     String? className,
     String contentType,
   ) async {
-    final url = 'http://18.138.29.140:3000/api/posts/create';
+    var request = http.MultipartRequest(
+        'POST', Uri.parse('http://18.138.29.140:3000/api/posts/create'));
 
-    // Debug print for checking token
-    print('Token: $token');
+    request.headers['Authorization'] = 'Bearer $token';
 
-    if (token == null || token.isEmpty) {
-      print('Token is missing.');
-      return ApiResponse(success: false, message: "Token is missing.");
-    }
+    request.fields['heading'] = heading;
+    request.fields['classId'] = classId;
+    request.fields['schoolId'] = schoolId;
+    if (body != null) request.fields['body'] = body;
+    if (gradeName != null) request.fields['gradeName'] = gradeName;
+    if (className != null) request.fields['className'] = className;
+    request.fields['contentType'] = contentType;
 
-    // Create request body for announcement
-    final requestBody = {
-      'heading': selectedHeading,
-      'classId': selectedClassName,
-      'schoolId': schoolId,
-      'contentPictures': contentPictures,
-      'documents': documents,
-      'className': className ?? '',
-      'gradeName': gradeName ?? '',
-      'contentType': contentType
-    };
+    // Add image and document files to the request
+    request.files.addAll(contentPictures);
+    request.files.addAll(documents);
 
-    print('Announcement Request Body: $requestBody');
-
-    try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(requestBody),
-      );
-
-      print('Response Status: ${response.statusCode}');
-      print('Response Body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final jsonResponse = jsonDecode(response.body);
-        return ApiResponse(
-          success: jsonResponse['con'] ?? false,
-          message: jsonResponse['msg'] ?? 'No message received',
-        );
-      } else {
-        print('Failed to create announcement: ${response.reasonPhrase}');
-        return ApiResponse(
-          success: false,
-          message: 'Failed to create announcement: ${response.reasonPhrase}',
-        );
-      }
-    } catch (e) {
-      print('An error occurred: $e');
-      return ApiResponse(success: false, message: 'An error occurred: $e');
+    // Send request and get the response
+    final response = await request.send();
+    if (response.statusCode == 200) {
+      final responseBody = await response.stream.bytesToString();
+      return ApiResponse(success: true, message: 'Post created successfully');
+    } else {
+      return ApiResponse(success: false, message: 'Failed to create post');
     }
   }
 
-// Function to create feed post
+// // Function to create feed post
+//   Future<ApiResponse> createFeedPost(
+//     String? token,
+//     String selectedHeading,
+//     String? bodyText,
+//     String? schoolId,
+//     List<String> contentPictures,
+//     List<String> documents,
+//     String contentType,
+//   ) async {
+//     final url = 'http://18.138.29.140:3000/api/posts/create';
+
+//     // Debug print for checking token
+//     print('Token: $token');
+
+//     if (token == null || token.isEmpty) {
+//       print('Token is missing.');
+//       return ApiResponse(success: false, message: "Token is missing.");
+//     }
+
+//     // Create request body for feed post
+//     final requestBody = {
+//       'heading': selectedHeading,
+//       'body': bodyText ?? '',
+//       'schoolId': schoolId ?? '',
+//       'contentPictures': contentPictures,
+//       'documents': documents,
+//       'contentType': contentType,
+//     };
+
+//     print('Feed Post Request Body: $requestBody');
+
+//     try {
+//       final response = await http.post(
+//         Uri.parse(url),
+//         headers: {
+//           'Authorization': 'Bearer $token',
+//           'Content-Type': 'application/json',
+//         },
+//         body: jsonEncode(requestBody),
+//       );
+
+//       print('Response Status: ${response.statusCode}');
+//       print('Response Body: ${response.body}');
+
+//       if (response.statusCode == 200) {
+//         final jsonResponse = jsonDecode(response.body);
+//         return ApiResponse(
+//           success: jsonResponse['con'] ?? false,
+//           message: jsonResponse['msg'] ?? 'No message received',
+//         );
+//       } else {
+//         print('Failed to create feed post: ${response.reasonPhrase}');
+//         return ApiResponse(
+//           success: false,
+//           message: 'Failed to create feed post: ${response.reasonPhrase}',
+//         );
+//       }
+//     } catch (e) {
+//       print('An error occurred: $e');
+//       return ApiResponse(success: false, message: 'An error occurred: $e');
+//     }
+//   }
+
+  // Function to create feed post
   Future<ApiResponse> createFeedPost(
-    String? token,
-    String selectedHeading,
-    String? schoolId,
-    List<String> contentPictures,
-    List<String> documents,
-    String? gradeName,
-    String? className,
+    String token,
+    String heading,
+    String? body,
+    String schoolId,
+    List<http.MultipartFile> contentPictures,
+    List<http.MultipartFile> documents,
     String contentType,
   ) async {
-    final url = 'http://18.138.29.140:3000/api/posts/create';
+    var request = http.MultipartRequest(
+        'POST', Uri.parse('http://18.138.29.140:3000/api/posts/create'));
 
-    // Debug print for checking token
-    print('Token: $token');
+    request.headers['Authorization'] = 'Bearer $token';
 
-    if (token == null || token.isEmpty) {
-      print('Token is missing.');
-      return ApiResponse(success: false, message: "Token is missing.");
-    }
+    request.fields['heading'] = heading;
+    request.fields['schoolId'] = schoolId;
+    if (body != null) request.fields['body'] = body;
+    request.fields['contentType'] = contentType;
 
-    // Create request body for feed post
-    final requestBody = {
-      'heading': selectedHeading,
-      'schoolId': schoolId,
-      'contentPictures': contentPictures,
-      'documents': documents,
-      'contentType': contentType,
-      // 'className': className ?? '',
-      // 'gradeName': gradeName ?? '',
-    };
+    // Add image and document files to the request
+    request.files.addAll(contentPictures);
+    request.files.addAll(documents);
 
-    print('Feed Post Request Body: $requestBody');
-
-    try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(requestBody),
-      );
-
-      print('Response Status: ${response.statusCode}');
-      print('Response Body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final jsonResponse = jsonDecode(response.body);
-        return ApiResponse(
-          success: jsonResponse['con'] ?? false,
-          message: jsonResponse['msg'] ?? 'No message received',
-        );
-      } else {
-        print('Failed to create feed post: ${response.reasonPhrase}');
-        return ApiResponse(
-          success: false,
-          message: 'Failed to create feed post: ${response.reasonPhrase}',
-        );
-      }
-    } catch (e) {
-      print('An error occurred: $e');
-      return ApiResponse(success: false, message: 'An error occurred: $e');
+    // Send request and get the response
+    final response = await request.send();
+    if (response.statusCode == 200) {
+      final responseBody = await response.stream.bytesToString();
+      return ApiResponse(success: true, message: 'Post created successfully');
+    } else {
+      return ApiResponse(success: false, message: 'Failed to create post');
     }
   }
 
@@ -291,6 +368,22 @@ class PostRepository {
       }
     } else {
       throw Exception('Failed to fetch school data: ${response.statusCode}');
+    }
+  }
+
+  Future<void> _attachImages(
+      List<String> contentPictures, http.MultipartRequest request) async {
+    for (var picturePath in contentPictures) {
+      request.files.add(await http.MultipartFile.fromPath(
+          'images', picturePath)); // Change 'images' if needed
+    }
+  }
+
+  Future<void> _attachDocuments(
+      List<String> documents, http.MultipartRequest request) async {
+    for (var documentPath in documents) {
+      request.files.add(await http.MultipartFile.fromPath(
+          'documents', documentPath)); // Change 'documents' if needed
     }
   }
 }

@@ -1,8 +1,13 @@
+import 'dart:io';
+
 import 'package:bumblebee_school_final/bloc/admin+teacher/post/post_event.dart';
 import 'package:bumblebee_school_final/bloc/admin+teacher/post/post_state.dart';
 import 'package:bumblebee_school_final/model/admin+teacher/post_model.dart';
 import 'package:bumblebee_school_final/repositories/admin+teacher/post_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PostBloc extends Bloc<PostEvent, PostState> {
@@ -14,6 +19,21 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     on<FetchPosts>(_onFetchPosts);
   }
 
+// // File-to-MultipartFile conversion function
+  Future<http.MultipartFile> fileToMultipartFile(
+      File file, String fieldName) async {
+    final mimeType = lookupMimeType(file.path)?.split('/');
+    if (mimeType == null) {
+      throw Exception('Unable to determine mime type for file: ${file.path}');
+    }
+
+    return await http.MultipartFile.fromPath(
+      fieldName,
+      file.path,
+      contentType: MediaType(mimeType[0], mimeType[1]),
+    );
+  }
+
   Future<void> _onCreatePost(CreatePost event, Emitter<PostState> emit) async {
     emit(PostLoading());
 
@@ -22,76 +42,64 @@ class PostBloc extends Bloc<PostEvent, PostState> {
       final String? token = prefs.getString('userToken');
       final String? schoolId = prefs.getString('schoolId');
 
-      print("Token: $token");
-      print("SchoolId: $schoolId");
-
       if (token == null || schoolId == null) {
-        print('Authentication token or School ID not found');
         emit(PostFailure('Authentication token or School ID not found'));
         return;
       }
 
-      // Convert List<File> to List<String> (file paths) for images and documents
-      final List<String> imagePaths =
-          event.contentPictures.map((image) => image.path).toList();
-      final List<String> documentPaths =
-          event.documents.map((document) => document.path).toList();
+      // Convert List<File> to List<MultipartFile> for images and documents
+      final List<http.MultipartFile> imageFiles = await Future.wait(
+        event.contentPictures
+            .map((image) => fileToMultipartFile(image, 'contentPictures'))
+            .toList(),
+      );
 
-      print("Submitting Post with details:");
-      print("Heading: ${event.heading}");
-      print("ContentType: ${event.contentType}");
-      print("ClassId: ${event.classId}");
-      print("SchoolId: $schoolId");
-      print("ContentPictures: $imagePaths");
-      print("Documents: $documentPaths");
-      print("GradeName: ${event.gradeName}");
+      final List<http.MultipartFile> documentFiles = await Future.wait(
+        event.documents
+            .map((document) => fileToMultipartFile(document, 'documents'))
+            .toList(),
+      );
 
-      // Check the content type and call the appropriate method
+      // API Call based on content type
       if (event.contentType == 'announcement') {
-        // Call the announcement post creation
         final result = await postRepository.createAnnouncement(
-          token, // Token
-          event.heading, // Heading
-          event.classId, // Class ID
-          schoolId, // School ID
-          imagePaths, // Image paths
-          documentPaths, // Document paths
-          event.gradeName, // Grade Name
-          event.className, // Class Name
+          token,
+          event.heading,
+          event.body,
+          event.classId,
+          schoolId,
+          imageFiles,
+          documentFiles,
+          event.gradeName,
+          event.className,
           event.contentType,
         );
 
         if (result.success) {
-          emit(PostSuccess([])); // Adjust the success state as necessary
+          emit(PostSuccess([])); // Handle success
         } else {
-          print('Failed to create announcement: ${result.message}');
-          emit(PostFailure(result.message));
+          emit(PostFailure(result.message)); // Handle failure
         }
       } else if (event.contentType == 'feed') {
-        // Call the feed post creation
         final result = await postRepository.createFeedPost(
-          token, // Token
-          event.heading, // Heading
-          schoolId, // School ID
-          imagePaths, // Image paths
-          documentPaths, // Document paths
-          event.gradeName, // Grade Name
-          event.className, // Class Name
+          token,
+          event.heading,
+          event.body,
+          schoolId,
+          imageFiles,
+          documentFiles,
           event.contentType,
         );
 
         if (result.success) {
-          emit(PostSuccess([])); // Adjust the success state as necessary
+          emit(PostSuccess([])); // Handle success
         } else {
-          print('Failed to create feed post: ${result.message}');
-          emit(PostFailure(result.message));
+          emit(PostFailure(result.message)); // Handle failure
         }
       } else {
-        print('Invalid content type: ${event.contentType}');
         emit(PostFailure('Invalid content type'));
       }
     } catch (e) {
-      print("An error occurred while creating the post: $e");
       emit(PostFailure('An error occurred while creating the post: $e'));
     }
   }

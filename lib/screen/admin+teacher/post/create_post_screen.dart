@@ -38,24 +38,35 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     _fetchSchoolData();
   }
 
-  // Fetch school data (schoolId and schoolName)
+// Fetch school data (schoolId and schoolName)
   Future<void> _fetchSchoolData() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('userToken');
 
     if (token != null) {
       try {
+        // Fetch school data using the token
         List<Map<String, dynamic>> schoolsData =
             await PostRepository.fetchSchoolData(token);
+
         if (schoolsData.isNotEmpty) {
           setState(() {
             schoolId = schoolsData[0]["_id"];
             schoolName = schoolsData[0]["schoolName"];
           });
+
+          // Save schoolId in SharedPreferences
+          await prefs.setString('schoolId', schoolId!);
+
+          print("School data fetched and saved: $schoolId, $schoolName");
+        } else {
+          print("No school data found");
         }
       } catch (e) {
         print("Error fetching school data: $e");
       }
+    } else {
+      print("User token not found");
     }
   }
 
@@ -292,7 +303,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 SizedBox(height: 40),
 
                 // Buttons Row (Create Post and Cancel)
-// Action buttons
                 Row(
                   mainAxisAlignment:
                       MainAxisAlignment.end, // Align buttons to the right
