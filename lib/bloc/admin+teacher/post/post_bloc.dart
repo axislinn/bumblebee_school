@@ -124,7 +124,7 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     }
   }
 
-  // Handler for DeletePost event
+// Handler for DeletePost event
   Future<void> _onDeletePost(DeletePost event, Emitter<PostState> emit) async {
     emit(PostLoading()); // Loading state while deleting
 
@@ -140,7 +140,8 @@ class PostBloc extends Bloc<PostEvent, PostState> {
       final result = await postRepository.deletePost(token, event.postId);
 
       if (result.success) {
-        emit(PostSuccess([])); // Optionally refetch posts after deletion
+        // Refetch posts after successful deletion
+        add(FetchPosts()); // Automatically fetch the latest posts after deletion
       } else {
         emit(PostFailure(result.message)); // Handle failure
       }

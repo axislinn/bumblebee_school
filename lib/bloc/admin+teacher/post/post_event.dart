@@ -51,7 +51,4 @@ class DeletePost extends PostEvent {
   final String postId;
 
   DeletePost(this.postId);
-
-  @override
-  List<Object?> get props => [postId];
 }

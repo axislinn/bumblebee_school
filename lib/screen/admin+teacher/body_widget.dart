@@ -1,5 +1,6 @@
 import 'package:bumblebee_school_final/bloc/admin+teacher/post/post_bloc.dart';
 import 'package:bumblebee_school_final/bloc/admin+teacher/post/post_event.dart';
+import 'package:bumblebee_school_final/bloc/admin+teacher/post/post_state.dart';
 import 'package:bumblebee_school_final/model/admin+teacher/post_model.dart';
 import 'package:bumblebee_school_final/repositories/admin+teacher/post_repository.dart';
 import 'package:flutter/material.dart';
@@ -7,21 +8,105 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
-class PostWidget extends StatefulWidget {
-  final PostModel post;
-
-  const PostWidget({Key? key, required this.post}) : super(key: key);
-
+class PostListWidget extends StatefulWidget {
   @override
-  _PostWidgetState createState() => _PostWidgetState();
+  _PostListWidgetState createState() => _PostListWidgetState();
 }
 
-class _PostWidgetState extends State<PostWidget> {
+class _PostListWidgetState extends State<PostListWidget> {
+  late PostBloc _postBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _postBloc = BlocProvider.of<PostBloc>(context);
+    _postBloc.add(FetchPosts());
+  }
+
+  void _onDeletePost(String postId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('userToken');
+
+    if (token != null) {
+      try {
+        final postRepository = PostRepository();
+        final ApiResponse response =
+            await postRepository.deletePost(token, postId);
+
+        if (response.success) {
+          // Trigger the deletion event in the bloc
+          _postBloc.add(DeletePost(postId));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Post deleted successfully')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text('Failed to delete post: ${response.message}')),
+          );
+        }
+      } catch (e) {
+        print("Error deleting post: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error deleting post')),
+        );
+      }
+    } else {
+      print("User token not found");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final formattedCreatedAt = widget.post.createdAt != null
-        ? timeago.format(widget.post.createdAt!)
-        : null;
+    return BlocBuilder<PostBloc, PostState>(
+      builder: (context, state) {
+        if (state is PostLoading) {
+          return Center(child: CircularProgressIndicator());
+        } else if (state is PostSuccess) {
+          final posts = state.posts; // Updated list of posts
+          if (posts.isEmpty) {
+            return Center(child: Text('No posts available.'));
+          }
+          return ListView.builder(
+            itemCount: posts.length,
+            itemBuilder: (context, index) {
+              final post = posts[index];
+              return ListTile(
+                title: Text(post.heading),
+                trailing: IconButton(
+                  icon: Icon(Icons.delete),
+                  onPressed: () {
+                    // Dispatch delete post event
+                    context.read<PostBloc>().add(
+                        DeletePost(post.id!)); // Ensure post.id is available
+                  },
+                ),
+              );
+            },
+          );
+        } else if (state is PostFailure) {
+          return Center(child: Text(state.error));
+        }
+        return Center(child: Text('Something went wrong.'));
+      },
+    );
+  }
+}
+
+class PostWidget extends StatelessWidget {
+  final PostModel post;
+  final Function(String) onDelete;
+
+  const PostWidget({
+    Key? key,
+    required this.post,
+    required this.onDelete,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final formattedCreatedAt =
+        post.createdAt != null ? timeago.format(post.createdAt!) : null;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
@@ -30,32 +115,29 @@ class _PostWidgetState extends State<PostWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (widget.post.postedBy != null)
+            if (post.postedBy != null)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Profile picture display if available
-                  if (widget.post.postedBy!.profilePicture.isNotEmpty)
+                  if (post.postedBy!.profilePicture.isNotEmpty)
                     CircleAvatar(
                       backgroundImage:
-                          NetworkImage(widget.post.postedBy!.profilePicture),
+                          NetworkImage(post.postedBy!.profilePicture),
                       radius: 20,
                     ),
                   const SizedBox(width: 10),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Display the school name
-                      if (widget.post.school?.schoolName != null)
+                      if (post.school?.schoolName != null)
                         Text(
-                          widget.post.school!.schoolName,
+                          post.school!.schoolName,
                           style: const TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 16),
                         ),
-                      // Display the admin's role and username
-                      if (widget.post.postedBy?.userName != null)
+                      if (post.postedBy?.userName != null)
                         Text(
-                          'Admin: ${widget.post.postedBy!.userName}',
+                          'Admin: ${post.postedBy!.userName}',
                           style:
                               const TextStyle(fontSize: 12, color: Colors.grey),
                         ),
@@ -70,42 +152,34 @@ class _PostWidgetState extends State<PostWidget> {
                 style: const TextStyle(color: Colors.grey, fontSize: 12),
               ),
             const SizedBox(height: 10),
-
-            // Display heading of the post
             Text(
-              widget.post.heading,
+              post.heading,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-
-            // Display content type: either Feed or Announcement
             Text(
-              'Type: ${widget.post.contentType == "announcement" ? "Announcement" : "Feed"}',
+              'Type: ${post.contentType == "announcement" ? "Announcement" : "Feed"}',
               style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: Colors.grey),
             ),
             const SizedBox(height: 10),
-
-            // Display post body if available
-            if (widget.post.body?.isNotEmpty ?? false)
+            if (post.body?.isNotEmpty ?? false)
               Text(
-                widget.post.body!,
+                post.body!,
                 style: const TextStyle(fontSize: 14),
               ),
             const SizedBox(height: 10),
-
-            // Display content pictures if available
-            if (widget.post.contentPictures != null &&
-                widget.post.contentPictures!.isNotEmpty)
+            if (post.contentPictures != null &&
+                post.contentPictures!.isNotEmpty)
               SizedBox(
                 height: 100,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  itemCount: widget.post.contentPictures!.length,
+                  itemCount: post.contentPictures!.length,
                   itemBuilder: (context, index) {
-                    final pictureUrl = widget.post.contentPictures![index];
+                    final pictureUrl = post.contentPictures![index];
                     return Padding(
                       padding: const EdgeInsets.only(right: 8.0),
                       child: pictureUrl.isNotEmpty
@@ -122,8 +196,7 @@ class _PostWidgetState extends State<PostWidget> {
             const SizedBox(height: 10),
 
             // Display attached documents if available
-            if (widget.post.documents != null &&
-                widget.post.documents!.isNotEmpty)
+            if (post.documents != null && post.documents!.isNotEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -132,7 +205,7 @@ class _PostWidgetState extends State<PostWidget> {
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 5),
-                  ...widget.post.documents!.map((doc) => GestureDetector(
+                  ...post.documents!.map((doc) => GestureDetector(
                         onTap: () {
                           // Handle document click
                         },
@@ -147,8 +220,6 @@ class _PostWidgetState extends State<PostWidget> {
                 ],
               ),
             const SizedBox(height: 10),
-
-            // Reactions section
             Row(
               children: [
                 IconButton(
@@ -158,13 +229,12 @@ class _PostWidgetState extends State<PostWidget> {
                   },
                 ),
                 const SizedBox(width: 5),
-                Text('${widget.post.reactions ?? 0} Reactions'),
-                const Spacer(), // Spacer to push delete button to the right
+                Text('${post.reactions ?? 0} Reactions'),
+                const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
                   onPressed: () {
-                    final postBloc = BlocProvider.of<PostBloc>(context);
-                    _confirmDelete(context, postBloc, widget.post.id);
+                    _confirmDelete(context, post.id!);
                   },
                 ),
               ],
@@ -175,14 +245,7 @@ class _PostWidgetState extends State<PostWidget> {
     );
   }
 
-  void _confirmDelete(BuildContext context, PostBloc postBloc, String? postId) {
-    if (postId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Cannot delete the post. Post ID is missing.')),
-      );
-      return;
-    }
-
+  void _confirmDelete(BuildContext context, String postId) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -197,8 +260,8 @@ class _PostWidgetState extends State<PostWidget> {
             TextButton(
               child: Text('Delete'),
               onPressed: () {
-                postBloc.add(DeletePost(postId));
-                Navigator.of(context).pop(); // Close the dialog
+                onDelete(postId); // Call the onDelete callback
+                Navigator.of(context).pop();
               },
             ),
           ],

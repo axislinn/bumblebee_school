@@ -46,7 +46,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   itemCount: posts.length,
                   itemBuilder: (context, index) {
                     final post = posts[index];
-                    return PostWidget(post: post);
+                    return PostWidget(
+                      post: post,
+                      onDelete: (String) {
+                        // Trigger the delete action
+                        context.read<PostBloc>().add(DeletePost(post.id!));
+                      },
+                    );
                   },
                 ),
               );
