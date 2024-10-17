@@ -10,6 +10,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CreatePostScreen extends StatefulWidget {
+  final VoidCallback onPostCreated;
+
+  CreatePostScreen({required this.onPostCreated});
   @override
   _CreatePostScreenState createState() => _CreatePostScreenState();
 }
@@ -128,9 +131,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Post created successfully!')),
           );
+
+          widget.onPostCreated(); // Call the callback after post creation
+
           setState(() {
-            _isSubmitting = false; // Re-enable the button after success
+            _isSubmitting = false;
           });
+
           Future.delayed(Duration(seconds: 1), () {
             Navigator.of(context).pop();
           });
@@ -139,7 +146,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             SnackBar(content: Text('Failed to create post: ${state.error}')),
           );
           setState(() {
-            _isSubmitting = false; // Re-enable the button after failure
+            _isSubmitting = false;
           });
         }
       },
