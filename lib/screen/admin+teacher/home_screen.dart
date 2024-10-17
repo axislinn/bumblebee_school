@@ -21,6 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     // Fetch posts when the HomeScreen is initialized
     context.read<PostBloc>().add(FetchPosts());
+    context.read<PostBloc>().add(FetchAnnouncements());
   }
 
   @override
@@ -44,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onRefresh: () async {
                 // Fetch posts again when the user pulls down
                 context.read<PostBloc>().add(FetchPosts());
+                context.read<PostBloc>().add(FetchAnnouncements());
               },
               child: ListView.builder(
                 itemCount: posts.length,
@@ -99,6 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
           onPostCreated: () {
             // This function will be called when a post is created
             context.read<PostBloc>().add(FetchPosts());
+            context.read<PostBloc>().add(FetchAnnouncements());
           },
         ),
       ),

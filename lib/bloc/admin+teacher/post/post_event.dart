@@ -47,6 +47,8 @@ class CreatePost extends PostEvent {
 
 class FetchPosts extends PostEvent {} // New event for fetching posts
 
+class FetchAnnouncements extends PostEvent {} // Add this line for announcements
+
 class DeletePost extends PostEvent {
   final String postId;
 

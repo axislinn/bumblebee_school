@@ -30,7 +30,6 @@ class PostWidget extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Profile picture display if available
                   if (post.postedBy!.profilePicture.isNotEmpty)
                     CircleAvatar(
                       backgroundImage:
@@ -41,14 +40,12 @@ class PostWidget extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Display the school name
                       if (post.school?.schoolName != null)
                         Text(
                           post.school!.schoolName,
                           style: const TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 16),
                         ),
-                      // Display the admin's role and username
                       if (post.postedBy?.userName != null)
                         Text(
                           'Admin: ${post.postedBy!.userName}',
@@ -56,6 +53,25 @@ class PostWidget extends StatelessWidget {
                               const TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                     ],
+                  ),
+                  const Spacer(),
+
+                  // Three dots for options (delete post)
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == 'Delete') {
+                        final postBloc = BlocProvider.of<PostBloc>(context);
+                        _confirmDelete(context, postBloc, post.id);
+                      }
+                    },
+                    itemBuilder: (BuildContext context) {
+                      return [
+                        const PopupMenuItem<String>(
+                          value: 'Delete',
+                          child: Text('Delete Post'),
+                        ),
+                      ];
+                    },
                   ),
                 ],
               ),
@@ -66,15 +82,11 @@ class PostWidget extends StatelessWidget {
                 style: const TextStyle(color: Colors.grey, fontSize: 12),
               ),
             const SizedBox(height: 10),
-
-            // Display heading of the post
             Text(
               post.heading,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-
-            // Display content type: either Feed or Announcement
             Text(
               'Type: ${post.contentType == "announcement" ? "Announcement" : "Feed"}',
               style: const TextStyle(
@@ -83,16 +95,12 @@ class PostWidget extends StatelessWidget {
                   color: Colors.grey),
             ),
             const SizedBox(height: 10),
-
-            // Display post body if available
             if (post.body?.isNotEmpty ?? false)
               Text(
                 post.body!,
                 style: const TextStyle(fontSize: 14),
               ),
             const SizedBox(height: 10),
-
-            // Display content pictures if available
             if (post.contentPictures != null &&
                 post.contentPictures!.isNotEmpty)
               SizedBox(
@@ -116,8 +124,6 @@ class PostWidget extends StatelessWidget {
                 ),
               ),
             const SizedBox(height: 10),
-
-            // Display attached documents if available
             if (post.documents != null && post.documents!.isNotEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,8 +148,6 @@ class PostWidget extends StatelessWidget {
                 ],
               ),
             const SizedBox(height: 10),
-
-            // Reactions section
             Row(
               children: [
                 IconButton(
@@ -154,14 +158,6 @@ class PostWidget extends StatelessWidget {
                 ),
                 const SizedBox(width: 5),
                 Text('${post.reactions ?? 0} Reactions'),
-                const Spacer(), // Spacer to push delete button to the right
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () {
-                    final postBloc = BlocProvider.of<PostBloc>(context);
-                    _confirmDelete(context, postBloc, post.id);
-                  },
-                ),
               ],
             ),
           ],
@@ -172,7 +168,6 @@ class PostWidget extends StatelessWidget {
 
   void _confirmDelete(BuildContext context, PostBloc postBloc, String? postId) {
     if (postId == null) {
-      // Optionally show a message or handle the null case
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Cannot delete the post. Post ID is missing.')),
       );
@@ -193,9 +188,8 @@ class PostWidget extends StatelessWidget {
             TextButton(
               child: Text('Delete'),
               onPressed: () {
-                // Use the passed PostBloc instead of BlocProvider.of<PostBloc>(context)
                 postBloc.add(DeletePost(postId));
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop();
               },
             ),
           ],

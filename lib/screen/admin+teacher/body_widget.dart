@@ -1,106 +1,17 @@
 import 'package:bumblebee_school_final/bloc/admin+teacher/post/post_bloc.dart';
 import 'package:bumblebee_school_final/bloc/admin+teacher/post/post_event.dart';
-import 'package:bumblebee_school_final/bloc/admin+teacher/post/post_state.dart';
 import 'package:bumblebee_school_final/model/admin+teacher/post_model.dart';
-import 'package:bumblebee_school_final/repositories/admin+teacher/post_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timeago/timeago.dart' as timeago;
-
-class PostListWidget extends StatefulWidget {
-  @override
-  _PostListWidgetState createState() => _PostListWidgetState();
-}
-
-class _PostListWidgetState extends State<PostListWidget> {
-  late PostBloc _postBloc;
-
-  @override
-  void initState() {
-    super.initState();
-    _postBloc = BlocProvider.of<PostBloc>(context);
-    _postBloc.add(FetchPosts());
-  }
-
-  void _onDeletePost(String postId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('userToken');
-
-    if (token != null) {
-      try {
-        final postRepository = PostRepository();
-        final ApiResponse response =
-            await postRepository.deletePost(token, postId);
-
-        if (response.success) {
-          // Trigger the deletion event in the bloc
-          _postBloc.add(DeletePost(postId));
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Post deleted successfully')),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text('Failed to delete post: ${response.message}')),
-          );
-        }
-      } catch (e) {
-        print("Error deleting post: $e");
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error deleting post')),
-        );
-      }
-    } else {
-      print("User token not found");
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<PostBloc, PostState>(
-      builder: (context, state) {
-        if (state is PostLoading) {
-          return Center(child: CircularProgressIndicator());
-        } else if (state is PostSuccess) {
-          final posts = state.posts; // Updated list of posts
-          if (posts.isEmpty) {
-            return Center(child: Text('No posts available.'));
-          }
-          return ListView.builder(
-            itemCount: posts.length,
-            itemBuilder: (context, index) {
-              final post = posts[index];
-              return ListTile(
-                title: Text(post.heading),
-                trailing: IconButton(
-                  icon: Icon(Icons.delete),
-                  onPressed: () {
-                    // Dispatch delete post event
-                    context.read<PostBloc>().add(
-                        DeletePost(post.id!)); // Ensure post.id is available
-                  },
-                ),
-              );
-            },
-          );
-        } else if (state is PostFailure) {
-          return Center(child: Text(state.error));
-        }
-        return Center(child: Text('Something went wrong.'));
-      },
-    );
-  }
-}
 
 class PostWidget extends StatelessWidget {
   final PostModel post;
-  final Function(String) onDelete;
 
   const PostWidget({
     Key? key,
     required this.post,
-    required this.onDelete,
+    required Null Function(dynamic String) onDelete,
   }) : super(key: key);
 
   @override
@@ -142,6 +53,25 @@ class PostWidget extends StatelessWidget {
                               const TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                     ],
+                  ),
+                  const Spacer(),
+                  // Three dots (PopupMenuButton) for post options (e.g., delete)
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert),
+                    onSelected: (value) {
+                      if (value == 'Delete') {
+                        final postBloc = BlocProvider.of<PostBloc>(context);
+                        _confirmDelete(context, postBloc, post.id);
+                      }
+                    },
+                    itemBuilder: (BuildContext context) {
+                      return [
+                        const PopupMenuItem<String>(
+                          value: 'Delete',
+                          child: Text('Delete Post'),
+                        ),
+                      ];
+                    },
                   ),
                 ],
               ),
@@ -194,8 +124,6 @@ class PostWidget extends StatelessWidget {
                 ),
               ),
             const SizedBox(height: 10),
-
-            // Display attached documents if available
             if (post.documents != null && post.documents!.isNotEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,13 +158,6 @@ class PostWidget extends StatelessWidget {
                 ),
                 const SizedBox(width: 5),
                 Text('${post.reactions ?? 0} Reactions'),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () {
-                    _confirmDelete(context, post.id!);
-                  },
-                ),
               ],
             ),
           ],
@@ -245,22 +166,30 @@ class PostWidget extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, String postId) {
+  void _confirmDelete(BuildContext context, PostBloc postBloc, String? postId) {
+    if (postId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Cannot delete the post. Post ID is missing.')),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Confirm Delete'),
-          content: Text('Are you sure you want to delete this post?'),
+          title: const Text('Confirm Delete'),
+          content: const Text('Are you sure you want to delete this post?'),
           actions: [
             TextButton(
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
               onPressed: () => Navigator.of(context).pop(),
             ),
             TextButton(
-              child: Text('Delete'),
+              child: const Text('Delete'),
               onPressed: () {
-                onDelete(postId); // Call the onDelete callback
+                postBloc.add(DeletePost(postId));
                 Navigator.of(context).pop();
               },
             ),

@@ -138,6 +138,63 @@ class PostRepository {
     }
   }
 
+  Future<List<PostModel>> fetchAnnouncements(String? token) async {
+    final url = 'http://18.138.29.140:3000/api/posts/getAnnouncements';
+
+    if (token == null || token.isEmpty) {
+      print("Error: Token is missing.");
+      return [];
+    }
+
+    try {
+      print("Fetching announcements from URL: $url with token: $token");
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print("Response body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+        print("Response structure: ${jsonResponse.keys}");
+
+        if (jsonResponse.containsKey('result') &&
+            jsonResponse['result'].containsKey('announcements')) {
+          final List<dynamic> jsonAnnouncements =
+              jsonResponse['result']['announcements'];
+
+          print("Number of announcements fetched: ${jsonAnnouncements.length}");
+
+          // Convert the announcements to PostModel objects
+          return jsonAnnouncements
+              .map((json) {
+                try {
+                  return PostModel.fromJson(json);
+                } catch (e) {
+                  print("Error mapping json to PostModel: $e");
+                  return null; // Handle this case as appropriate
+                }
+              })
+              .whereType<PostModel>()
+              .toList(); // Filter out null values
+        } else {
+          print("Key 'announcements' not found in 'result'");
+          return [];
+        }
+      } else {
+        print("Failed to fetch announcements: ${response.statusCode}");
+        return [];
+      }
+    } catch (e) {
+      print("Error fetching announcements: $e");
+      return [];
+    }
+  }
+
   // Function to delete a post
   Future<ApiResponse> deletePost(String token, String postId) async {
     try {

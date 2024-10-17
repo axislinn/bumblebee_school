@@ -39,7 +39,7 @@ class PostModel {
 
   factory PostModel.fromJson(Map<String, dynamic> json) {
     return PostModel(
-      id: json['_id'],
+      id: json['_id'] as String?,
       heading: json['heading'] ?? '',
       body: json['body'],
       contentPictures: json['contentPictures'] != null

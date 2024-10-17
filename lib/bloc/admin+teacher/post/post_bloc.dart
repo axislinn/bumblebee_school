@@ -16,10 +16,11 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     // Register event handlers
     on<CreatePost>(_onCreatePost);
     on<FetchPosts>(_onFetchPosts);
+    on<FetchAnnouncements>(_onFetchAnnouncements);
     on<DeletePost>(_onDeletePost);
   }
 
-// // File-to-MultipartFile conversion function
+// File-to-MultipartFile conversion function
   Future<http.MultipartFile> fileToMultipartFile(
       File file, String fieldName) async {
     final mimeType = lookupMimeType(file.path)?.split('/');
@@ -120,6 +121,29 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     } catch (e) {
       // Log the error for debugging
       print("An error occurred while fetching posts: $e");
+      emit(PostFailure('An error occurred: $e'));
+    }
+  }
+
+  // Fetching announcements
+  Future<void> _onFetchAnnouncements(
+      FetchAnnouncements event, Emitter<PostState> emit) async {
+    emit(PostLoading());
+
+    try {
+      // Retrieve token from SharedPreferences for authentication
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('userToken');
+
+      // Fetch announcements from the repository
+      final List<PostModel> announcements =
+          await postRepository.fetchAnnouncements(token);
+
+      // Emit the loaded state with the fetched announcements
+      emit(PostSuccess(announcements));
+    } catch (e) {
+      // Log the error for debugging
+      print("An error occurred while fetching announcements: $e");
       emit(PostFailure('An error occurred: $e'));
     }
   }
