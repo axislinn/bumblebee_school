@@ -11,14 +11,17 @@ class PostLoading extends PostState {
 // Success state when posts are successfully loaded or an action is completed (like deletion)
 class PostLoaded extends PostState {
   final List<PostModel> posts;
+
   PostLoaded(this.posts);
   // Optionally, you can add methods to check if the list is empty, etc.
   bool get isEmpty => posts.isEmpty;
 }
 
 class PostSuccess extends PostState {
-  final List<PostModel> posts; // Add a field to store the list of posts
-  PostSuccess(this.posts); // Update the constructor
+  final List<PostModel> posts;
+  final List<PostModel> announcements;
+
+  PostSuccess({required this.posts, required this.announcements});
 }
 
 class PostFailure extends PostState {

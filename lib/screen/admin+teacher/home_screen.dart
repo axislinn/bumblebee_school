@@ -37,8 +37,8 @@ class _HomeScreenState extends State<HomeScreen> {
           if (state is PostLoading) {
             return Center(child: CircularProgressIndicator());
           } else if (state is PostSuccess) {
-            final posts = state.posts;
-            if (posts.isEmpty) {
+            final allPosts = [...state.posts, ...state.announcements];
+            if (allPosts.isEmpty) {
               return Center(child: Text('No posts available'));
             }
             return RefreshIndicator(
@@ -48,14 +48,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 context.read<PostBloc>().add(FetchAnnouncements());
               },
               child: ListView.builder(
-                itemCount: posts.length,
+                itemCount: allPosts.length,
                 itemBuilder: (context, index) {
-                  final post = posts[index];
+                  final post = allPosts[index];
                   return PostWidget(
                     post: post,
-                    onDelete: (String) {
+                    onDelete: (String postId) {
                       // Trigger the delete action
-                      context.read<PostBloc>().add(DeletePost(post.id!));
+                      context.read<PostBloc>().add(DeletePost(postId));
                     },
                   );
                 },

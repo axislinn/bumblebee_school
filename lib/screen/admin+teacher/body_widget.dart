@@ -7,11 +7,12 @@ import 'package:timeago/timeago.dart' as timeago;
 
 class PostWidget extends StatelessWidget {
   final PostModel post;
+  final Function(String) onDelete;
 
   const PostWidget({
     Key? key,
     required this.post,
-    required Null Function(dynamic String) onDelete,
+    required this.onDelete,
   }) : super(key: key);
 
   @override
@@ -48,31 +49,33 @@ class PostWidget extends StatelessWidget {
                         ),
                       if (post.postedBy?.userName != null)
                         Text(
-                          'Admin: ${post.postedBy!.userName}',
+                          'Posted by: ${post.postedBy!.userName}',
                           style:
                               const TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                     ],
                   ),
                   const Spacer(),
-                  // Three dots (PopupMenuButton) for post options (e.g., delete)
-                  PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert),
-                    onSelected: (value) {
-                      if (value == 'Delete') {
-                        final postBloc = BlocProvider.of<PostBloc>(context);
-                        _confirmDelete(context, postBloc, post.id);
-                      }
-                    },
-                    itemBuilder: (BuildContext context) {
-                      return [
-                        const PopupMenuItem<String>(
-                          value: 'Delete',
-                          child: Text('Delete Post'),
-                        ),
-                      ];
-                    },
-                  ),
+                  // Popup menu for delete action
+                  if (post.contentType == "feed" ||
+                      post.contentType == "announcement")
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert),
+                      onSelected: (value) {
+                        if (value == 'Delete') {
+                          final postBloc = BlocProvider.of<PostBloc>(context);
+                          _confirmDelete(context, postBloc, post.id);
+                        }
+                      },
+                      itemBuilder: (BuildContext context) {
+                        return [
+                          const PopupMenuItem<String>(
+                            value: 'Delete',
+                            child: Text('Delete Post'),
+                          ),
+                        ];
+                      },
+                    ),
                 ],
               ),
             const SizedBox(height: 10),
@@ -175,6 +178,8 @@ class PostWidget extends StatelessWidget {
       return;
     }
 
+    print('Confirming delete for post ID: $postId'); // Debug log
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -189,7 +194,8 @@ class PostWidget extends StatelessWidget {
             TextButton(
               child: const Text('Delete'),
               onPressed: () {
-                postBloc.add(DeletePost(postId));
+                postBloc.add(DeletePost(postId)); // Trigger the delete event
+                print('Deleting post ID: $postId'); // Debug log
                 Navigator.of(context).pop();
               },
             ),

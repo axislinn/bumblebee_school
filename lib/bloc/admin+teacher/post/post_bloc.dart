@@ -77,7 +77,12 @@ class PostBloc extends Bloc<PostEvent, PostState> {
         );
 
         if (result.success) {
-          emit(PostSuccess([])); // Handle success
+          // Fetch posts and announcements after creating an announcement
+          List<PostModel> posts = await postRepository.fetchPosts(token);
+          List<PostModel> announcements =
+              await postRepository.fetchAnnouncements(token);
+          emit(PostSuccess(
+              posts: posts, announcements: announcements)); // Handle success
         } else {
           emit(PostFailure(result.message)); // Handle failure
         }
@@ -93,7 +98,12 @@ class PostBloc extends Bloc<PostEvent, PostState> {
         );
 
         if (result.success) {
-          emit(PostSuccess([])); // Handle success
+          // Fetch posts and announcements after creating an announcement
+          List<PostModel> posts = await postRepository.fetchPosts(token);
+          List<PostModel> announcements =
+              await postRepository.fetchAnnouncements(token);
+          emit(PostSuccess(
+              posts: posts, announcements: announcements)); // Handle success
         } else {
           emit(PostFailure(result.message)); // Handle failure
         }
@@ -116,8 +126,12 @@ class PostBloc extends Bloc<PostEvent, PostState> {
       // Fetch posts from the repository
       final List<PostModel> posts = await postRepository.fetchPosts(token);
 
+      // Fetch announcements as well
+      final List<PostModel> announcements =
+          await postRepository.fetchAnnouncements(token);
+
       // Emit the loaded state with the fetched posts
-      emit(PostSuccess(posts));
+      emit(PostSuccess(posts: posts, announcements: announcements));
     } catch (e) {
       // Log the error for debugging
       print("An error occurred while fetching posts: $e");
@@ -140,7 +154,7 @@ class PostBloc extends Bloc<PostEvent, PostState> {
           await postRepository.fetchAnnouncements(token);
 
       // Emit the loaded state with the fetched announcements
-      emit(PostSuccess(announcements));
+      emit(PostSuccess(posts: [], announcements: announcements));
     } catch (e) {
       // Log the error for debugging
       print("An error occurred while fetching announcements: $e");

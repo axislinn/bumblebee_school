@@ -6,8 +6,8 @@ class PostModel {
   final String? id;
   final String heading;
   final String? body;
-  final List<String>? documents; // Keep as List<String> for flexibility
-  final List<String>? contentPictures; // Support multiple images
+  final List<String>? documents;
+  final List<String>? contentPictures;
   final String contentType;
   final int? reactions;
   final String? classId;
@@ -16,7 +16,6 @@ class PostModel {
   final DateTime? updatedAt;
   final PostedByModel? postedBy;
 
-  // Referencing school and class as objects
   final SchoolModel? school;
   final ClassModel? classModel;
 
@@ -41,7 +40,7 @@ class PostModel {
     return PostModel(
       id: json['_id'] as String?,
       heading: json['heading'] ?? '',
-      body: json['body'],
+      body: json['body'] as String?,
       contentPictures: json['contentPictures'] != null
           ? List<String>.from(json['contentPictures'])
           : null,
@@ -51,22 +50,18 @@ class PostModel {
       contentType: json['contentType'] ?? '',
       reactions: json['reactions'] ?? 0,
       classId: json['classId'] is Map
-          ? json['classId']['id'] as String?
-          : json['classId'] as String?, // Handle null safely
+          ? json['classId']['_id'] as String?
+          : json['classId'] as String?,
       schoolId: json['schoolId'] is Map
-          ? json['schoolId']['id'] as String?
-          : json['schoolId'] as String?, // Handle null safely
-      school:
-          json['school'] != null ? SchoolModel.fromJson(json['school']) : null,
-      classModel:
-          json['class'] != null ? ClassModel.fromJson(json['class']) : null,
+          ? json['schoolId']['_id'] as String?
+          : json['schoolId'] as String?,
       createdAt:
           json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       updatedAt:
           json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
-      postedBy: json['posted_by'] != null
+      postedBy: json['posted_by'] is Map<String, dynamic>
           ? PostedByModel.fromJson(json['posted_by'])
-          : null,
+          : null, // Only parse PostedByModel if it's a map
     );
   }
 
