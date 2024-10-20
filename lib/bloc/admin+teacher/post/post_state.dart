@@ -4,14 +4,11 @@ abstract class PostState {}
 
 class PostInitial extends PostState {}
 
-class PostLoading extends PostState {
-  ///အဲ့အပိုင်းမှာကို ထပ်ပြီး​ောတ့ ပြင်ပြီးတော့ကို ထည့်ပေးဖို့ကို လိုမည်
-}
+class PostLoading extends PostState {}
 
 // Success state when posts are successfully loaded or an action is completed (like deletion)
 class PostLoaded extends PostState {
   final List<PostModel> posts;
-
   PostLoaded(this.posts);
   // Optionally, you can add methods to check if the list is empty, etc.
   bool get isEmpty => posts.isEmpty;
@@ -20,7 +17,6 @@ class PostLoaded extends PostState {
 class PostSuccess extends PostState {
   final List<PostModel> posts;
   final List<PostModel> announcements;
-
   PostSuccess({required this.posts, required this.announcements});
 }
 

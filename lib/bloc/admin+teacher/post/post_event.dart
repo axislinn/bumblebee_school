@@ -51,6 +51,5 @@ class FetchAnnouncements extends PostEvent {} // Add this line for announcements
 
 class DeletePost extends PostEvent {
   final String postId;
-
   DeletePost(this.postId);
 }

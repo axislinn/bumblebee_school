@@ -138,60 +138,72 @@ class PostRepository {
     }
   }
 
+  // Function to fetch announcements
   Future<List<PostModel>> fetchAnnouncements(String? token) async {
     final url = 'http://18.138.29.140:3000/api/posts/getAnnouncements';
 
+    // Check if the token is null or empty
     if (token == null || token.isEmpty) {
       print("Error: Token is missing.");
-      return [];
+      return []; // Return an empty list if token is missing
     }
 
     try {
       print("Fetching announcements from URL: $url with token: $token");
+
+      // Make the HTTP GET request with the Authorization header
       final response = await http.get(
         Uri.parse(url),
         headers: {
-          'Authorization': 'Bearer $token',
+          'Authorization': 'Bearer $token', // Set the Authorization header
         },
       );
 
+      // Log the response body for debugging
       print("Response body: ${response.body}");
 
+      // Check the status code of the response
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
 
+        // Log the keys of the response structure
         print("Response structure: ${jsonResponse.keys}");
 
+        // Check for the 'result' and 'announcements' keys
         if (jsonResponse.containsKey('result') &&
             jsonResponse['result'].containsKey('announcements')) {
           final List<dynamic> jsonAnnouncements =
               jsonResponse['result']['announcements'];
 
+          // Log the number of announcements fetched
           print("Number of announcements fetched: ${jsonAnnouncements.length}");
+
+          // Add the print statement here to log the announcements JSON
+          print("Announcement JSON: $jsonAnnouncements");
 
           // Convert the announcements to PostModel objects
           return jsonAnnouncements
               .map((json) {
                 try {
-                  return PostModel.fromJson(json);
+                  return PostModel.fromJson(json); // Map JSON to PostModel
                 } catch (e) {
                   print("Error mapping json to PostModel: $e");
                   return null; // Handle this case as appropriate
                 }
               })
-              .whereType<PostModel>()
-              .toList(); // Filter out null values
+              .whereType<PostModel>() // Filter out null values
+              .toList();
         } else {
           print("Key 'announcements' not found in 'result'");
-          return [];
+          return []; // Return an empty list if key not found
         }
       } else {
         print("Failed to fetch announcements: ${response.statusCode}");
-        return [];
+        return []; // Return an empty list on failure
       }
     } catch (e) {
       print("Error fetching announcements: $e");
-      return [];
+      return []; // Return an empty list on exception
     }
   }
 

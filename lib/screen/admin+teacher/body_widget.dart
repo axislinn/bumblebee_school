@@ -58,7 +58,7 @@ class PostWidget extends StatelessWidget {
                   const Spacer(),
                   // Popup menu for delete action
                   if (post.contentType == "feed" ||
-                      post.contentType == "announcement")
+                      post.contentType == 'announcement')
                     PopupMenuButton<String>(
                       icon: const Icon(Icons.more_vert),
                       onSelected: (value) {

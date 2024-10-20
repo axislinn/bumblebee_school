@@ -5,19 +5,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
-class PostWidget extends StatelessWidget {
+class AnnouncementWidget extends StatelessWidget {
   final PostModel post;
+  final Function(String) onDelete;
 
-  const PostWidget(
-      {Key? key,
-      required this.post,
-      required Null Function(dynamic String) onDelete})
-      : super(key: key);
+  const AnnouncementWidget({
+    Key? key,
+    required this.post,
+    required this.onDelete,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    print('Building Announcement Widget for post: ${post.toJson()}');
+
     final formattedCreatedAt =
         post.createdAt != null ? timeago.format(post.createdAt!) : null;
+    print('Formatted Created At: $formattedCreatedAt');
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
@@ -26,55 +30,71 @@ class PostWidget extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (post.postedBy != null)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  if (post.postedBy!.profilePicture.isNotEmpty)
-                    CircleAvatar(
-                      backgroundImage:
-                          NetworkImage(post.postedBy!.profilePicture),
-                      radius: 20,
-                    ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (post.school?.schoolName != null)
-                        Text(
-                          post.school!.schoolName,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                      if (post.postedBy?.userName != null)
-                        Text(
-                          'Admin: ${post.postedBy!.userName}',
-                          style:
-                              const TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                    ],
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (post.postedBy != null &&
+                    post.postedBy!.profilePicture.isNotEmpty)
+                  CircleAvatar(
+                    backgroundImage:
+                        NetworkImage(post.postedBy!.profilePicture),
+                    radius: 20,
                   ),
-                  const Spacer(),
-
-                  // Three dots for options (delete post)
-                  PopupMenuButton<String>(
-                    onSelected: (value) {
-                      if (value == 'Delete') {
-                        final postBloc = BlocProvider.of<PostBloc>(context);
-                        _confirmDelete(context, postBloc, post.id);
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (post.school?.schoolName != null)
+                      Text(
+                        post.school!.schoolName,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                    if (post.postedBy?.userName != null)
+                      Text(
+                        'Posted by: ${post.postedBy!.userName}',
+                        style:
+                            const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    if (post.classModel?.className != null &&
+                        post.classModel?.grade != null)
+                      Text(
+                        'Class: ${post.classModel!.className}, Grade: ${post.classModel!.grade}',
+                        style:
+                            const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                  ],
+                ),
+                const Spacer(),
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert),
+                  onSelected: (value) {
+                    if (value == 'Delete') {
+                      if (post.id != null) {
+                        _confirmDelete(context,
+                            post.id); // Proceed with deletion if ID is valid
+                      } else {
+                        // Show message if post ID is missing
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                                'Announcement ID is missing. Cannot delete post.'),
+                          ),
+                        );
                       }
-                    },
-                    itemBuilder: (BuildContext context) {
-                      return [
-                        const PopupMenuItem<String>(
-                          value: 'Delete',
-                          child: Text('Delete Post'),
-                        ),
-                      ];
-                    },
-                  ),
-                ],
-              ),
+                    }
+                  },
+                  itemBuilder: (BuildContext context) {
+                    return [
+                      const PopupMenuItem<String>(
+                        value: 'Delete',
+                        child: Text('Delete Post'),
+                      ),
+                    ];
+                  },
+                ),
+              ],
+            ),
             const SizedBox(height: 10),
             if (formattedCreatedAt != null)
               Text(
@@ -135,7 +155,7 @@ class PostWidget extends StatelessWidget {
                   const SizedBox(height: 5),
                   ...post.documents!.map((doc) => GestureDetector(
                         onTap: () {
-                          // Handle document click
+                          print('Document tapped: $doc');
                         },
                         child: Text(
                           doc,
@@ -153,7 +173,7 @@ class PostWidget extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.thumb_up, color: Colors.blue),
                   onPressed: () {
-                    // Handle like/reaction logic
+                    print('Like button pressed for post ID: ${post.id}');
                   },
                 ),
                 const SizedBox(width: 5),
@@ -166,10 +186,13 @@ class PostWidget extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, PostBloc postBloc, String? postId) {
+  void _confirmDelete(BuildContext context, String? postId) {
     if (postId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Cannot delete the post. Post ID is missing.')),
+        const SnackBar(
+          content: Text(
+              'Cannot delete the announcement. Announcement ID is missing.'),
+        ),
       );
       return;
     }
@@ -178,18 +201,21 @@ class PostWidget extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Confirm Delete'),
-          content: Text('Are you sure you want to delete this post?'),
+          title: const Text('Confirm Delete'),
+          content:
+              const Text('Are you sure you want to delete this announcement?'),
           actions: [
             TextButton(
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
               onPressed: () => Navigator.of(context).pop(),
             ),
             TextButton(
-              child: Text('Delete'),
+              child: const Text('Delete'),
               onPressed: () {
-                postBloc.add(DeletePost(postId));
+                context.read<PostBloc>().add(DeletePost(postId));
                 Navigator.of(context).pop();
+                onDelete(postId);
+                print('Announcement deleted: $postId');
               },
             ),
           ],
