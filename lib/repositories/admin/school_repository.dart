@@ -3,7 +3,7 @@ import 'package:bumblebee_school_final/model/admin/school_model.dart';
 import 'package:http/http.dart' as http;
 
 class SchoolRepository {
-  static const String _baseUrl = 'http://18.138.29.140:3000';
+  static const String _baseUrl = 'https://tharhtetaung.xyz';
 
   Future<void> registerSchool(SchoolModel school, String token) async {
     final url = Uri.parse('$_baseUrl/api/school/create');

@@ -1,6 +1,11 @@
+import 'package:bumblebee_school_final/bloc/teacher/student_bloc/student_bloc.dart';
+import 'package:bumblebee_school_final/repositories/admin+teacher/class_repository.dart';
+import 'package:bumblebee_school_final/repositories/admin+teacher/user_repository.dart';
+import 'package:bumblebee_school_final/repositories/teacher/teacher_repository.dart';
+import 'package:bumblebee_school_final/screen/admin+teacher/classes/request_to_join_class.dart';
 import 'package:bumblebee_school_final/screen/admin/register_school.dart';
-import 'package:bumblebee_school_final/screen/teacher/link_school.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class SchoolSelect extends StatelessWidget{
   @override
@@ -25,15 +30,20 @@ class SchoolSelect extends StatelessWidget{
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => LinkSchool(),
-                  ),
-                );
-              },
-              child: Text('Link With School'),
-            ),
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BlocProvider<StudentBloc>(
+          create: (context) => StudentBloc(ClassRepository(), UserRepository(), TeacherRepository()),
+          child: RequestToJoinClass(),
+        ),
+      ),
+    );
+  },
+  child: Text('Link With School'),
+),
+
           ],
         ),
       ),

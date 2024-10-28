@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class TeacherRepository{
-    final String baseUrl = 'http://18.138.29.140:3000';
+    final String baseUrl = 'https://tharhtetaung.xyz';
 
 
 //Requesting admin to join the class

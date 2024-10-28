@@ -17,7 +17,8 @@ class _RequestToJoinClassState extends State<RequestToJoinClass> {
       appBar: AppBar(
         title: Text('Join Class'),
       ),
-      body: Padding(
+      body: Container(
+        constraints: BoxConstraints.expand(), // Ensure the container takes up the available space
         padding: const EdgeInsets.all(16.0),
         child: BlocListener<StudentBloc, StudentState>(
           listener: (context, state) {
@@ -30,7 +31,6 @@ class _RequestToJoinClassState extends State<RequestToJoinClass> {
                 _isButtonDisabled = false;
               });
               _classCodeController.clear(); // Clear the text field
-              
             } else if (state is JoinClassErrorState) {
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text('Error joining class: ${state.message}'),
@@ -40,46 +40,51 @@ class _RequestToJoinClassState extends State<RequestToJoinClass> {
               });
             }
           },
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-              controller: _classCodeController,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: 'Enter your Class Code',
-              ),
-            ),
-              SizedBox(height: 20),
-              Center( 
-                child: ElevatedButton(
-                  onPressed: _isButtonDisabled
-                      ? null
-                      : () {
-                          setState(() {
-                            _isButtonDisabled = true;
-                          });
-                          _requestToJoinClass(context);
-                        },
-                  child: _isButtonDisabled
-                      ? SizedBox(
-                          height: 16,
-                          width: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Text('Join Class'),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: _classCodeController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Enter your Class Code',
+                  ),
                 ),
-              ),
-            ],
+                SizedBox(height: 20),
+                Center(
+                  child: ElevatedButton(
+                    onPressed: _isButtonDisabled
+                        ? null
+                        : () {
+                            // Delay the setState call until after the first frame is rendered
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              setState(() {
+                                _isButtonDisabled = true;
+                              });
+                              _requestToJoinClass(context);
+                            });
+                          },
+                    child: _isButtonDisabled
+                        ? SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text('Join Class'),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  // function to handle the join class request
+  // Function to handle the join class request
   void _requestToJoinClass(BuildContext context) {
     String classCode = _classCodeController.text;
     if (classCode.isNotEmpty) {

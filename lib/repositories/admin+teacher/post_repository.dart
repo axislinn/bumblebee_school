@@ -13,7 +13,7 @@ class ApiResponse {
 class PostRepository {
   Future<ApiResponse> createPost(PostModel post, String schoolId, String token,
     List<String> imagePaths, List<String> documentPaths) async {
-    final url = 'http://18.138.29.140:3000';
+    final url = 'https://tharhtetaung.xyz';
     final request = http.MultipartRequest('POST', Uri.parse(url));
 
     // Set headers for the request

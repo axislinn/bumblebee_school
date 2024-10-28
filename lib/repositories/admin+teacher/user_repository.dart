@@ -5,7 +5,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserRepository {
-  final String baseUrl = 'http://18.138.29.140:3000';
+  final String baseUrl = 'https://tharhtetaung.xyz';
   final FlutterSecureStorage secureStorage = FlutterSecureStorage();
 
 
