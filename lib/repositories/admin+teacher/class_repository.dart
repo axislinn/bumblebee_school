@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 
 class ClassRepository {
-  final String baseUrl = 'http://18.138.29.140:3000';
+  final String baseUrl = 'https://tharhtetaung.xyz';
 
   Future<List<ClassModel>> fetchClasses(String token) async {
     final response = await http.get(
